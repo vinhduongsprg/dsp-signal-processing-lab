@@ -1,4 +1,4 @@
-"""Analyze and plot the original and floating-point FIR-filtered signals."""
+"""Analyze and plot the original and both FIR-filtered signals."""
 
 import csv
 from pathlib import Path
@@ -60,6 +60,15 @@ def report_dominant_frequencies(frequencies: np.ndarray, amplitude: np.ndarray) 
         print(f"  {frequencies[index]:7.2f} Hz, {amplitude[index]:.6f}")
 
 
+def component_amplitude(
+    frequencies: np.ndarray, amplitude: np.ndarray, target_hz: float
+) -> float:
+    bin_index = int(np.argmin(np.abs(frequencies - target_hz)))
+    if not np.isclose(frequencies[bin_index], target_hz):
+        raise ValueError(f"{target_hz:g} Hz does not align with an FFT bin.")
+    return float(amplitude[bin_index])
+
+
 def main() -> None:
     original = load_signal(INPUT_PATH, "input")
     floating_point = load_signal(FLOAT_PATH, "value")
@@ -88,6 +97,17 @@ def main() -> None:
     frequencies, original_amplitude = one_sided_amplitude(original)
     _, floating_amplitude = one_sided_amplitude(floating_point)
     _, q15_amplitude = one_sided_amplitude(q15)
+    component_measurements = {}
+    for frequency_hz in (40.0, 220.0):
+        input_amplitude = component_amplitude(
+            frequencies, original_amplitude, frequency_hz)
+        float_output_amplitude = component_amplitude(
+            frequencies, floating_amplitude, frequency_hz)
+        q15_output_amplitude = component_amplitude(
+            frequencies, q15_amplitude, frequency_hz)
+        component_measurements[frequency_hz] = (
+            input_amplitude, float_output_amplitude, q15_output_amplitude)
+
     figure, axes = plt.subplots(3, 1, figsize=(10, 9), sharex=True)
     spectrum_data = (
         ("Original signal", original_amplitude, "tab:blue"),
@@ -117,6 +137,23 @@ def main() -> None:
     report_dominant_frequencies(frequencies, floating_amplitude)
     print("Q15 filtered signal:")
     report_dominant_frequencies(frequencies, q15_amplitude)
+    print("Measured tone amplitudes (Hann-windowed FFT bin):")
+    for frequency_hz, (input_amplitude, float_amplitude, q15_tone_amplitude) in (
+        component_measurements.items()
+    ):
+        float_preservation = 100 * float_amplitude / input_amplitude
+        q15_preservation = 100 * q15_tone_amplitude / input_amplitude
+        print(
+            f"  {frequency_hz:g} Hz: input={input_amplitude:.8f}, "
+            f"floating={float_amplitude:.8f} "
+            f"({float_preservation:.4f}% preserved), "
+            f"Q15={q15_tone_amplitude:.8f} ({q15_preservation:.4f}% preserved)"
+        )
+    input_220, float_220, q15_220 = component_measurements[220.0]
+    float_attenuation_db = 20 * np.log10(input_220 / float_220)
+    q15_attenuation_db = 20 * np.log10(input_220 / q15_220)
+    print(f"220 Hz attenuation: floating={float_attenuation_db:.4f} dB, "
+          f"Q15={q15_attenuation_db:.4f} dB")
     print(f"Wrote {TIME_PLOT_PATH}")
     print(f"Wrote {SPECTRUM_PLOT_PATH}")
 

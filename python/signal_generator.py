@@ -14,16 +14,23 @@ RANDOM_SEED = 2025
 OUTPUT_PATH = Path(__file__).resolve().parents[1] / "results" / "generated" / "input.csv"
 
 
-def main() -> None:
+def generate_signal(amplitude_scale: float = 1.0) -> np.ndarray:
+    if not np.isfinite(amplitude_scale) or amplitude_scale < 0:
+        raise ValueError("amplitude_scale must be a finite, non-negative number.")
+
     sample_count = int(SAMPLE_RATE_HZ * DURATION_SECONDS)
     sample_indices = np.arange(sample_count)
     time_seconds = sample_indices / SAMPLE_RATE_HZ
     random_generator = np.random.default_rng(RANDOM_SEED)
-    signal = (
+    return amplitude_scale * (
         0.55 * np.sin(2 * np.pi * LOW_FREQUENCY_HZ * time_seconds)
         + 0.25 * np.sin(2 * np.pi * HIGH_FREQUENCY_HZ * time_seconds)
         + 0.03 * random_generator.standard_normal(sample_count)
     )
+
+
+def main() -> None:
+    signal = generate_signal()
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT_PATH.open("w", newline="", encoding="utf-8") as csv_file:
@@ -31,7 +38,7 @@ def main() -> None:
         writer.writerow(["sample", "input"])
         writer.writerows((index, f"{value:.17g}") for index, value in enumerate(signal))
 
-    print(f"Wrote {sample_count} samples to {OUTPUT_PATH}")
+    print(f"Wrote {signal.size} samples to {OUTPUT_PATH}")
     print(
         f"Sampling rate: {SAMPLE_RATE_HZ} Hz; tones: "
         f"{LOW_FREQUENCY_HZ:g} Hz and {HIGH_FREQUENCY_HZ:g} Hz"

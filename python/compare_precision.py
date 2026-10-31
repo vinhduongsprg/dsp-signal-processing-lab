@@ -6,6 +6,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
+from precision_metrics import calculate_metrics
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 GENERATED_DIR = PROJECT_ROOT / "results" / "generated"
@@ -40,9 +42,7 @@ def main() -> None:
 
     difference = floating_point - q15
     absolute_difference = np.abs(difference)
-    mse = float(np.mean(difference**2))
-    rmse = float(np.sqrt(mse))
-    maximum_error = float(np.max(absolute_difference))
+    metrics = calculate_metrics(floating_point, q15)
 
     sample_indices = np.arange(floating_point.size)
     figure, axes = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
@@ -64,9 +64,11 @@ def main() -> None:
     figure.savefig(PLOT_PATH, dpi=160)
     plt.close(figure)
 
-    print(f"MSE: {mse:.12g}")
-    print(f"RMSE: {rmse:.12g}")
-    print(f"Maximum absolute error: {maximum_error:.12g}")
+    print(f"MSE: {metrics['mse']:.12g}")
+    print(f"RMSE: {metrics['rmse']:.12g}")
+    print(f"Relative RMSE: {metrics['relative_rmse']:.6%}")
+    print(f"SNR: {metrics['snr_db']:.6f} dB")
+    print(f"Maximum absolute error: {metrics['maximum_absolute_error']:.12g}")
     print(f"Wrote {PLOT_PATH}")
 
 
