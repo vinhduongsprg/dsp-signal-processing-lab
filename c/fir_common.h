@@ -9,8 +9,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define FIR_SAMPLE_RATE_HZ 1000
+#define FIR_CUTOFF_HZ 100
 #define FIR_TAP_COUNT 31
+#define FIR_WINDOW_NAME "Hamming"
 
+/* This is the single coefficient source used by both FIR implementations.
+   The normalized low-pass taps are designed for the parameters above. */
 static const double FIR_COEFFICIENTS[FIR_TAP_COUNT] = {
     6.2264927146063794e-19, 0.0012014263758827752, 0.0027843278479828914,
     0.0042273160854469005, 0.0039427634127764061, -2.412765926909971e-18,

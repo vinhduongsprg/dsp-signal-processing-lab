@@ -5,8 +5,8 @@ from pathlib import Path
 
 import numpy as np
 
+from fir_config import SAMPLE_RATE_HZ
 
-SAMPLE_RATE_HZ = 1000
 DURATION_SECONDS = 2.0
 LOW_FREQUENCY_HZ = 40.0
 HIGH_FREQUENCY_HZ = 220.0

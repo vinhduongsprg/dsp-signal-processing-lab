@@ -16,8 +16,8 @@ The project is inspired by experience working with the TI TMS320C5535 DSP during
 
 ## Methodology
 
-1. `python/signal_generator.py` creates the shared input CSV with a 40 Hz tone, a 220 Hz tone, and seeded Gaussian noise at 1,000 samples per second. Signal amplitudes are kept within the Q15 range for this experiment.
-2. `c/fir_filter.c` and `c/fir_q15.c` read that exact CSV and independently filter the same samples. They share the coefficient array in `c/fir_common.h`.
+1. `python/signal_generator.py` creates the shared input CSV with a 40 Hz tone, a 220 Hz tone, and seeded Gaussian noise. Signal amplitudes are kept within the Q15 range for this experiment.
+2. `c/fir_filter.c` and `c/fir_q15.c` read that exact CSV and independently filter the same samples. They share the coefficient array and filter parameters in `c/fir_common.h`.
 3. `python/fft_analysis.py` loads the original and both filtered outputs, reports the strongest spectral peaks, and creates the time- and frequency-domain plots.
 4. `python/compare_precision.py` compares the floating-point and Q15 outputs and creates the precision plot.
 
@@ -53,7 +53,7 @@ For input `x[n]` and coefficients `h[k]`, the causal FIR output is:
 
 `y[n] = sum(h[k] * x[n-k])`
 
-The implementation omits terms whose input index is before zero, so the output starts with the expected filter startup transient. Both C programs use the same 31 normalized, Hamming-windowed low-pass coefficients (100 Hz cutoff at 1,000 Hz sampling rate) from `c/fir_common.h`.
+The implementation omits terms whose input index is before zero, so the output starts with the expected filter startup transient. The shared source of truth is [`c/fir_common.h`](c/fir_common.h): it defines the 1,000 Hz design sample rate, 100 Hz cutoff, 31 taps, Hamming window, and the complete normalized coefficient array. Both C programs include this same array rather than maintaining separate coefficient copies. The signal generator and FFT analysis read the sample rate from this header through `python/fir_config.py`, keeping generated data and frequency axes aligned with the filter design.
 
 ### Sampling and FFT frequency resolution
 

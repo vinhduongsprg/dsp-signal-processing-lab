@@ -6,7 +6,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from signal_generator import SAMPLE_RATE_HZ
+from fir_config import SAMPLE_RATE_HZ
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
